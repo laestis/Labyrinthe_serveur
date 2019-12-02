@@ -1,134 +1,111 @@
+#!/usr/bin/python3.6
 # -*-coding:Utf-8 -*
+"""Code pour jouer au jeu du robot dans le labyrinthe"""
 
-"""Ce fichier contient le code principal du jeu.
-
-Exécutez-le avec Python pour lancer le jeu.
-
-"""
-
-import os
-import sys
-from robot import Robot
 import labyrinthe
+import sys
 
-# import carte
+#On importe les cartes, on salue le joueur et on lui propose les cartes
+cartes=labyrinthe.Cartes()
+print('Bienvenue.\nLe but du jeu est de faire sortir le robot (X) du labyrinthe, les O sont des murs, les . des portes et U est la sortie.\nVous pouvez quitter en entrant la lettre Q.\n')
+print(cartes)
 
-#definitions des valeurs de sortie du programme roboc
-SORTIE_ERREUR = -1
-SORTIE_SUCCES = 0
-
-
-from carte import Carte
-
-def PlayRoboc(carte):
-        """"
-        Fonction de gestion du jeu
-        :param : carte de jeu
-        :return
-        - true si c'est gagné
-        - false sinon
-        """
-        # Affichage de l'aide
-        carte.labyrinthe.printHelp()
-
-        # Demande d'un choix au joueur
-        choice = input("Jouer [A/N/S/E/O/Q] > ").lower()
-
-        # On sépare le choix du joueur en une direction et un nombre de case
-        (command, case) = carte.labyrinthe.splitChoice(choice)
-
-        # On sort avec le choix 'q' ou quand la partie est gagnée
-        while ((command != 'q') and (carte.labyrinthe.win == False)):
-            #print("your choice : {}".format(self.splitChoice(command)))
-            #print("You have chosen character \'{}\'".format(command))
-
-            # Affichage de l'aide
-            if (command == 'a'):
-                carte.labyrinthe.printHelp()
-            # Choix de direction
-            elif (command == 'n' or command == 's' or command == 'e' or command == 'o'):
-                #print("Need to chack position!")
-                # On bouge le robot en fonction du choix
-                carte.labyrinthe.CheckNextAndMove(command, int(case))
-            #test pour savoir si c'est gagné ou non
-            if carte.labyrinthe.win == False :
-                # on sauvegarde automatiquement
-                cartes[choix].save()
-                # Next choice
-                print(carte.labyrinthe)
-                # On rejoue
-                choice = input("Jouer [A/N/S/E/O/Q] > ").lower()
-                (command, case) = carte.labyrinthe.splitChoice(choice)
-        # Test de fin, on vérifie si on a gagné ou non
-        if carte.labyrinthe.win == False:
-            print("Vous avez demandé à sortir du labyrinthe")
-            return False
-        else:
-            print(carte.labyrinthe)
-            print("Félicitations, vous êtes sorti du labyrinthe :-)")
-            return True
+#On lit le numero de la carte en verifiant que celle existe et que le joueur nous a bien donne un numero
+choisir=True
+while choisir:
+ numero=input("Choississez un labyrinthe pour commencer à jouer.\n")
+ try:
+  numero=int(numero)
+  assert numero >0 and numero<len(cartes)+1
+ except ValueError:
+  print('Vous devez saisir le numero de la carte.')
+ except AssertionError:
+  print('Vous avez choisi une carte qui n existe pas.') 
+ else:
+  choisir=False
+#On sauvegarde cette partie sous un nouveau nom
+choisir=True
+while choisir:
+ nom_sauv=input("Quel nom voulez vous donner a votre partie? Vous pouvez choisir un nom deja existant la partie sera alors ecrasee.\n")
+ print(nom_sauv.isalpha())
+ try:
+  nom_sauv.strip()
+  assert nom_sauv.isalpha()
+ except AssertionError:
+  print('Le nom doit etre uniquement compose de lettres')
+ except:
+  print('Nom invalide')
+ else:
+  choisir=False
+  if nom_sauv not in cartes:
+   cartes.append(nom_sauv)
 
 
-# On charge les cartes existantes
-cartes = []
-for nom_fichier in os.listdir("cartes"):
-    #print("trouvé {} ".format(str(nom_fichier)))
-    if nom_fichier.endswith(".txt"):
-        chemin = os.path.join("cartes", nom_fichier)
-        nom_carte = nom_fichier[:-4].lower()
-        with open(chemin, "r") as fichier:
-            contenu = fichier.read()
-            # Création d'une carte
-            nouvelle_carte = Carte(nom_carte, contenu)
-        # Ajout de la carte à la liste des cartes
-        cartes.append(nouvelle_carte)
+#On initialise le labyrinthe puis on l affiche
+lab=labyrinthe.Labyrinthe(cartes[numero-1])
+print('Voici le labyrinthe de depart:\n')
+print(lab)
+print('\n')
 
-# On vérifie qu'on a bien trouvé au moins une carte
-if ( cartes != [] ):
-    # On affiche les cartes existantes, dont les parties sauvegardées
-    print("Labyrinthes existants :")
-    for i, carte in enumerate(cartes):
-        if  (carte.nom.endswith("_save") is True):
-            print("  {} - {} (partie en cours)".format(i + 1, carte.nom))
-        else:
-            print("  {} - {}".format(i + 1, carte.nom))
+#On propose au joueur les actions du jeu
+print(lab.print_actions())
 
-    #print("Il y a \'{}\' cartes à jouer".format(len(cartes)))
+jouer=True
 
-    user_input = input("Entrez un numéro de labyrinthe pour commencer à jouer : ")
-
-    # test de la valeur de l'entrée : entier ou non
-    try:
-       val = int(user_input)
-    except ValueError:
-       print("Ce n'est pas un entier, on sort")
-       sys.exit(SORTIE_ERREUR)
-
-    #on vérifie que le numéro est valide
-    if (val <= 0 or val > len(cartes)):
-        print("Choix non disponible, on sort.")
-        sys.exit(SORTIE_ERREUR)
+#Boucle sur les mouvements du joueur
+while jouer:
+ choisir=True
+ #On demande au joueur de choisir une action et on verifie la validite de son choix
+ while choisir:
+  action=input("Choisissez une action.\n")
+  try:
+   action=action.upper()
+   assert action[0] in  {'Q'} or  action[0] in lab.actions.keys()
+  except AttributeError:
+   print('Vous devez taper la lettre correspondant à l action.')
+  except AssertionError:
+   print('Ceci n est pas une action valable')
+  else:
+   if action[0]=='M' or action[0]=='P':
+    try: 
+     assert action[1] in  {'N','E','O','S'}
+    except :
+     print('Indiquer dans quel direction est le mur')
     else:
-        #on sauvegarde le choix
-        choix = val-1
-        print("Vous avez choisi le labyrinthe {}".format(cartes[choix]))
-        # print(type(cartes[choix].labyrinthe))
-
-    #on recherche le robot
-    print(cartes[choix].labyrinthe.FindRobot())
-
-    # Début du jeu
-    #if (cartes[choix].labyrinthe.Play() == False):
-    if (PlayRoboc(cartes[choix]) == False):
-
-        #print("Fin du jeu")
-        if (cartes[choix].save() == True):
-            print("Votre partie a été sauvegardée avec succès dans le fichier \'{}\'".format(cartes[choix].get_name_for_saving()))
-        else:
-            print("erreur de sauvegarde")
-else:
-    print("Aucune carte n'a été trouvée dans le dossier \'cartes\'!")
-
-print("\nFin du programme Roboc")
-
-sys.exit(SORTIE_SUCCES)
+     choisir=False
+   else:
+    if len(action)>1:
+     try:
+      repetition=int(action[1:])
+      assert repetition>0
+     except ValueError:
+      print('Apres l action, pour la repeter vous devez indiquer un nombre.')
+     except AssertionError:
+      print('Ce nombre de repetition n est pas valable.')
+     else:
+      choisir=False
+    else:
+     choisir=False
+     repetition=1
+ #On execute l action choisie
+ if action[0]=='Q':
+  jouer=False
+  lab.save(nom_sauv)
+  cartes.save()
+ elif action[0]=='M' or action[0]=='P':
+  retour=lab.action(action[0],action[1])
+  print(retour[0])
+  print(lab)
+  lab.save(nom_sauv)
+  if retour[1]:
+   jouer=False
+ else:
+  retour=lab.move(action[0],repetition)
+ #On imprime le resultat de l action et on sauvegarde, si la partie est terminee on sort
+  print(retour[0])
+  print(lab)
+  lab.save(nom_sauv)
+  if retour[1]:
+   jouer=False
+   
+sys.exit("A bientot") 
