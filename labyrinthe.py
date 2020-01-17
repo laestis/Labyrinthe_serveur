@@ -65,7 +65,7 @@ class Labyrinthe():
    while rob_a_placer:
     self.pos_rob[i]=randrange(0,len(self.labyrinthe))
     if self.labyrinthe[self.pos_rob[i]]==' ':
-     self.labyrinthe=self.labyrinthe[:self.pos_rob[i]]+'X'+self.labyrinthe[self.pos_rob[i]+1:]
+     self.labyrinthe=self.labyrinthe[:self.pos_rob[i]]+'x'+self.labyrinthe[self.pos_rob[i]+1:]
      rob_a_placer=False
    i=i+1
 
@@ -74,7 +74,11 @@ class Labyrinthe():
   lab_line=self.labyrinthe.splitlines()
   self.n_lig=len(lab_line)
   self.n_col=len(lab_line[0])
-  self.der_robot=' '
+  self.der_robot=list()
+  i=0
+  while i<nb_joueurs:
+   self.der_robot.append(' ')
+   i=i+1
   
   #Initialisation des mouvements autorises pour le robot
   self.actions=dict(N='Aller vers le nord/haut',S='Aller vers le sud/bas',E='Aller vers l est/gauche',O='Aller vers l ouest/droite',M='Murer une porte',P='Percer une porte')
@@ -84,6 +88,14 @@ class Labyrinthe():
   """Afficher le labyrinthe a l utilisateur"""
 
   return self.labyrinthe+'\n'
+
+ def display(self,joueur):
+  """Afficher le labyrinthe a l utilisateur joueur. Son robot est alors mis en majuscule"""
+
+  lab_joueur=self.labyrinthe[:self.pos_rob[joueur]]+'X'+self.labyrinthe[self.pos_rob[joueur]+1:]
+  
+  return lab_joueur
+
 
  def action(self,act,direction,joueur):
   """Fonction pour faire une action sur le labyrinthe, act est soit M pour murer soit P pour percer, la direction est E,O,N,S"""
@@ -130,6 +142,7 @@ class Labyrinthe():
   fini=False
   message=str()
 
+  lab_joueur=self.labyrinthe[:self.pos_rob[joueur]]+'X'+self.labyrinthe[self.pos_rob[joueur]+1:]
   #On regarde ou ira le robot avec le mouvement propose
   i=0
   while(i<repetition):
@@ -145,23 +158,26 @@ class Labyrinthe():
     message="L action n est pas valide"
     return (message,fini)
  
+
   #On regarde si le mouvement est permis, si il l est on effectue, si on se trouve a la sortie on decrete la fin de la partie
-   if self.labyrinthe[nouv_pos]==' ' or self.labyrinthe[nouv_pos]=='.':
+   if lab_joueur[nouv_pos]==' ' or lab_joueur[nouv_pos]=='.':
     self.pos_rob[joueur]=nouv_pos
-    self.labyrinthe=self.labyrinthe.replace('X',self.der_robot)
-    self.der_robot=self.labyrinthe[self.pos_rob[joueur]]
-    self.labyrinthe=self.labyrinthe[:self.pos_rob[joueur]]+"X"+self.labyrinthe[self.pos_rob[joueur]+1:]
+    lab_joueur=lab_joueur.replace('X',self.der_robot[joueur])
+    self.der_robot[joueur]=lab_joueur[self.pos_rob[joueur]]
+    lab_joueur=lab_joueur[:self.pos_rob[joueur]]+"X"+lab_joueur[self.pos_rob[joueur]+1:]
     message+='Mouvement {}{}  effectue.\n'.format(cote,i+1)
    elif self.labyrinthe[nouv_pos]=='U':
     self.pos_rob[joueur]=nouv_pos
-    self.labyrinthe=self.labyrinthe.replace('X',self.der_robot)
-    self.der_robot=self.labyrinthe[self.pos_rob[joueur]]
-    self.labyrinthe=self.labyrinthe[:self.pos_rob[joueur]]+"X"+self.labyrinthe[self.pos_rob[joueur]+1:]
+    lab_joueur=lab_joueur.replace('X',self.der_robot[joueur])
+    self.der_robot[joueur]=lab_joueur[self.pos_rob[joueur]]
+    lab_joueur=lab_joueur[:self.pos_rob[joueur]]+"X"+self.labyrinthe[self.pos_rob[joueur]+1:]
     message+='Bravo vous avez gagne.\n'
     fini=True
    else:
     message+='Mouvement {}{} interdit.\n'.format(cote,i+1)
    i+=1
+
+  self.labyrinthe=lab_joueur.replace('X','x')
   #On renvoie le message a donner au joueur et un booleen indiquant si la partie est finie  
   return (message,fini)
 
