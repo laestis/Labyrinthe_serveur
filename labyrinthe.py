@@ -2,6 +2,8 @@
 # -*-coding:Utf-8 -*
 import pickle
 import os
+from random import randrange
+
 
 class Cartes(list):
  """Classe derivée des listes que l on modifie pour la rendre spécifique aux cartes"""
@@ -41,7 +43,7 @@ class Cartes(list):
 class Labyrinthe():
  """Classe pour creer manipuler le labyrinthe, aussi bien son etat que les actions autorisees dessus"""
  
- def __init__(self,fichier_carte):
+ def __init__(self,fichier_carte,nb_joueurs):
   """Chargeons le labyrinthe, trouvons le robot et definissons les actions autorisees"""
 
   #on charge le labyrinthe
@@ -49,9 +51,24 @@ class Labyrinthe():
    self.labyrinthe=carte.read()
   
   #On cherche le robot
-  self.pos_rob=self.labyrinthe.find('X') 
-  if self.pos_rob==-1:
-   raise ValueError("Le robot n est pas la. Veuillez corriger la carte")
+  if self.labyrinthe.find('X')!=-1:
+   self.labyrinthe=self.labyrinthe.replace('X',' ')
+#  if self.pos_rob==-1:
+#   raise ValueError("Le robot n est pas la. Veuillez corriger la carte")
+
+# même si il y avait un robot on le met aleatoirement ailleurs
+  self.pos_rob=list()
+  i=0
+  while i<nb_joueurs:
+   self.pos_rob.append(-1)
+   rob_a_placer=True
+   while rob_a_placer:
+    self.pos_rob[i]=randrange(0,len(self.labyrinthe))
+    if self.labyrinthe[self.pos_rob[i]]==' ':
+     self.labyrinthe=self.labyrinthe[:self.pos_rob[i]]+'X'+self.labyrinthe[self.pos_rob[i]+1:]
+     rob_a_placer=False
+   i=i+1
+
 
   #Quelques variables de travail a definir
   lab_line=self.labyrinthe.splitlines()
@@ -68,7 +85,7 @@ class Labyrinthe():
 
   return self.labyrinthe+'\n'
 
- def action(self,act,direction):
+ def action(self,act,direction,joueur):
   """Fonction pour faire une action sur le labyrinthe, act est soit M pour murer soit P pour percer, la direction est E,O,N,S"""
 
   fini=False
@@ -76,13 +93,13 @@ class Labyrinthe():
 
   #On regarde ou on doit agir
   if direction=='N':
-   pos_act=self.pos_rob-self.n_col-1
+   pos_act=self.pos_rob[joueur]-self.n_col-1
   elif direction=='S':
-   pos_act=self.pos_rob+self.n_col+1
+   pos_act=self.pos_rob[joueur]+self.n_col+1
   elif direction=='O':
-   pos_act=self.pos_rob-1
+   pos_act=self.pos_rob[joueur]-1
   elif direction=='E':
-   pos_act=self.pos_rob+1
+   pos_act=self.pos_rob[joueur]+1
   else:
    message="L action n est pas valide"
    return (message,fini)   
@@ -90,16 +107,16 @@ class Labyrinthe():
   if act=='M':
    if self.labyrinthe[pos_act]==' ' or  self.labyrinthe[pos_act]=='.':
     message="On a mure"
-    self.labyrinthe=self.labyrinthe[:pos_act-1]+'O'+self.labyrinthe[pos_act:]
+    self.labyrinthe=self.labyrinthe[:pos_act]+'O'+self.labyrinthe[pos_act+1:]
    else:
-    messgae="On ne peut pas murer ici"
+    message="On ne peut pas murer ici"
     return (message,fini)
   elif act=='P':
-   if self.labyrinthe[pos_act]=='0':
+   if self.labyrinthe[pos_act]=='O':
     message="On a perce"
-#    self.labyrinthe[pos_act]==' '
+    self.labyrinthe=self.labyrinthe[:pos_act]+' '+self.labyrinthe[pos_act+1:]
    else:
-    messgae="On ne peut pas percer ici"
+    message="On ne peut pas percer ici"
     return (message,fini)
   else:
    message="L action n est pas valide"
@@ -107,7 +124,7 @@ class Labyrinthe():
 
   return (message,fini)
 
- def move(self,cote,repetition):
+ def move(self,cote,repetition,joueur):
   """Fonction pour faire bouger le robot, cote doit avec la valeur N, S, E, O exclusivement"""
 
   fini=False
@@ -117,29 +134,29 @@ class Labyrinthe():
   i=0
   while(i<repetition):
    if cote=='N':
-    nouv_pos=self.pos_rob-self.n_col-1
+    nouv_pos=self.pos_rob[joueur]-self.n_col-1
    elif cote=='S':
-    nouv_pos=self.pos_rob+self.n_col+1
+    nouv_pos=self.pos_rob[joueur]+self.n_col+1
    elif cote=='E':
-    nouv_pos=self.pos_rob+1
+    nouv_pos=self.pos_rob[joueur]+1
    elif cote=='O':
-    nouv_pos=self.pos_rob-1
+    nouv_pos=self.pos_rob[joueur]-1
    else :
     message="L action n est pas valide"
     return (message,fini)
  
   #On regarde si le mouvement est permis, si il l est on effectue, si on se trouve a la sortie on decrete la fin de la partie
    if self.labyrinthe[nouv_pos]==' ' or self.labyrinthe[nouv_pos]=='.':
-    self.pos_rob=nouv_pos
+    self.pos_rob[joueur]=nouv_pos
     self.labyrinthe=self.labyrinthe.replace('X',self.der_robot)
-    self.der_robot=self.labyrinthe[self.pos_rob]
-    self.labyrinthe=self.labyrinthe[:self.pos_rob]+"X"+self.labyrinthe[self.pos_rob+1:]
+    self.der_robot=self.labyrinthe[self.pos_rob[joueur]]
+    self.labyrinthe=self.labyrinthe[:self.pos_rob[joueur]]+"X"+self.labyrinthe[self.pos_rob[joueur]+1:]
     message+='Mouvement {}{}  effectue.\n'.format(cote,i+1)
    elif self.labyrinthe[nouv_pos]=='U':
-    self.pos_rob=nouv_pos
+    self.pos_rob[joueur]=nouv_pos
     self.labyrinthe=self.labyrinthe.replace('X',self.der_robot)
-    self.der_robot=self.labyrinthe[self.pos_rob]
-    self.labyrinthe=self.labyrinthe[:self.pos_rob]+"X"+self.labyrinthe[self.pos_rob+1:]
+    self.der_robot=self.labyrinthe[self.pos_rob[joueur]]
+    self.labyrinthe=self.labyrinthe[:self.pos_rob[joueur]]+"X"+self.labyrinthe[self.pos_rob[joueur]+1:]
     message+='Bravo vous avez gagne.\n'
     fini=True
    else:

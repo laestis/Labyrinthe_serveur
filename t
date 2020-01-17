@@ -1,20 +1,11 @@
-OOOOOOOOOOOOOOOOOOOO
-O O . O    O .     O
-O.O O O    O O     O
-O O O O    O O     O
-O.O O .    O O     O
-O O O OOOOOO O     O
-O O O        O     O
-O O OOOOOOOOOO     O
-O.O .        O     O
-O O O        O     O
-O O O        O     O
-O O.O        O     O
-O.O .        O     O
-O O O        O     O
-O O O        O     O
-O O O        O     O
-O O O        O     O
-O.O O        O     O
-O   O        OX    U
-OOOOOOOOOOOOOOOOOOOO
+OOOOOOOOOO
+OXO    O O
+O . OO   O
+O O O    O
+O OOOO O.O
+O O O    U
+O OOOOOO.O
+O O      O
+O O OOOOOO
+O . O    O
+OOOOOOOOOO 
