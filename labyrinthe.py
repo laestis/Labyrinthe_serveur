@@ -19,6 +19,7 @@ class Cartes(list):
     list.__init__(self,liste_temp)
   else:
    list.__init__(self,{'facile.txt','prison.txt'})
+   print(self)
 
  def save(self):
   """Methode pour sauvegarder la liste des cartes"""
