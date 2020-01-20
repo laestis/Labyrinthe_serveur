@@ -1,6 +1,6 @@
 #!/usr/bin/python3.6
 # -*-coding:Utf-8 -*
-"""Code pour jouer au jeu du robot dans le labyrinthe"""
+"""Code pour jouer au jeu du robot dans le labyrinthe, en mode client/serveur, un joueur ou plusieurs joueurs. Ici on a le code serveur."""
 
 import labyrinthe
 import sys
@@ -18,73 +18,66 @@ clients_connectes = []
 count=0
 i=0
 
-while count<20:
+#Connection des joueurs,apres connection du premier joueur on attend 15s pour que d autres nous rejoinent
+
+pas_de_joueurs=True
+#On attend le premier joueur
+while pas_de_joueurs:
+ connexions_demandees, wlist, xlist = select.select([connexion_principale],
+            [], [], 0.5)
+ for connexion in connexions_demandees:
+    connexion_avec_client, infos_connexion = connexion.accept()
+  # On ajoute le socket connecté à la liste des clients
+    clients_connectes.append(connexion_avec_client)
+    pas_de_joueurs=False 
+
+#On laisse un peu de temps aux autres joueurs pour se connecter
+while count<30:
  connexions_demandees, wlist, xlist = select.select([connexion_principale],
             [], [], 0.5)
  count=count+1
  for connexion in connexions_demandees:
-     i=i+1
      connexion_avec_client, infos_connexion = connexion.accept()
   # On ajoute le socket connecté à la liste des clients
      clients_connectes.append(connexion_avec_client)
-     msg='Bienvenue joueur {}.\n'.format(i)
-     connexion_avec_client.send(msg.encode())
-if len(clients_connectes)==0:
-  print('Personne ne veut jouer')
-  exit()
 
+#nombre de joueurs pour la partie
 nb_joueurs=len(clients_connectes)
-print('ils sont ',nb_joueurs)
-#connexion_avec_client, infos_connexion = connexion_principale.accept()
 
-#On importe les cartes, on salue le joueur et on lui propose les cartes
+#On importe les cartes, on salue le/les joueurs et on propose les cartes
 cartes=labyrinthe.Cartes()
-msg_a_envoyer='Le but du jeu est de faire sortir le robot (X) du labyrinthe, les O sont des murs, les . des portes et U est la sortie.\nVous pouvez quitter en entrant la lettre Q.\n'
-msg_a_envoyer=msg_a_envoyer+cartes.__repr__()
+msg_cartes='Le but du jeu est de faire sortir le robot (X) du labyrinthe, les O sont des murs, les . des portes et U est la sortie.\nVous pouvez quitter en entrant la lettre Q.\n'
+msg_cartes=msg_cartes+cartes.__repr__()
 
+#Le joueur 1 est celui qui choisit la carte
 i=0
 for client in clients_connectes:
  if i!=0:
-  msg_a_envoyer=msg_a_envoyer+'On attend que le joueur 1 choississe le labyrinthe.\n'
+  msg_a_envoyer='Bienvenue joueur '+str(i+1)+'\n.'+msg_cartes+'On attend que le joueur 1 choississe le labyrinthe.\n'
  else :
-  msg_a_envoyer=msg_a_envoyer+'Choississez un labyrinthe pour commencer à jouer.\n'
-
+  msg_a_envoyer='Bienvenue joueur '+str(i+1)+'\n.'+msg_cartes+'Choississez un labyrinthe pour commencer à jouer.\n'
  client.send(msg_a_envoyer.encode())
  i=i+1
 
- #On lit le numero de la carte en verifiant que celle existe et que le joueur nous a bien donne un numero
+ #On lit le numero de la carte en verifiant que celle ci existe et que le joueur nous a bien donne un numero
 choisir=True
 while choisir:
-# lire=True
-# while lire:
-#  clients_a_lire = []
-#  try:
-#       clients_a_lire, wlist, xlist = select.select(clients_connectes,
-#              [], [], 0.05)
-#  except select.error:
-#      pass
-#  else:
-#      #if len(clients_a_lire)>1:
-#   for client in clients_a_lire:
- 
  msg_recu = clients_connectes[0].recv(1024)
  numero=msg_recu.decode()
  print(numero)
  lire=False
-
  try:
   numero=int(numero)
   assert numero >0 and numero<len(cartes)+1
  except ValueError:
-     for client in clients_connectes:
-         client.send(b'Vous devez saisir le numero de la carte.')
+  clients_connectes[0].send(b'Vous devez saisir le numero de la carte.')
  except AssertionError:
-     for client in clients_connectes:
-         client.send(b'Vous avez choisi une carte qui n existe pas.')
+  clients_connectes[0].send(b'Vous avez choisi une carte qui n existe pas.')
  else:
   choisir=False
   lab=labyrinthe.Labyrinthe(cartes[numero-1],nb_joueurs)
   i=0
+# Une fois le choix fait on envoie le labyrinthe a tos les joueurs
   for client in clients_connectes:
    msg_a_envoyer='Voici le labyrinthe de depart:\n'+lab.display(i)+'\n'+lab.print_actions()
    client.send(msg_a_envoyer.encode())
@@ -92,16 +85,18 @@ while choisir:
 
 
 jouer=True
- #Boucle sur les mouvements du joueur
 while jouer:
  i=-1
+ #Les joueurs jouent chacun leur tours
  for client in clients_connectes:
+#Si le jeu est fini on sort
   if not jouer:
    break
   i=i+1
   client.send(b'A vous')
   choisir=True
   while choisir:
+ #on verifie que le joueur a choisi une action conforme
    msg_recu = client.recv(1024)
    action=msg_recu.decode()
    print(action)
@@ -135,6 +130,8 @@ while jouer:
       choisir=False
       repetition=1
   #On execute l action choisie
+  #Si un joueur fait une action non valide il perd son tour
+  #Si on envoie fin le client ferme la connection
   if action[0]=='Q':
    jouer=False
    for client2 in clients_connectes:

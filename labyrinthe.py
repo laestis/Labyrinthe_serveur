@@ -50,13 +50,11 @@ class Labyrinthe():
   with open(fichier_carte,'r') as carte:
    self.labyrinthe=carte.read()
   
-  #On cherche le robot
+  #On cherche le robot deja present dans le fichier pour l'enlever
   if self.labyrinthe.find('X')!=-1:
    self.labyrinthe=self.labyrinthe.replace('X',' ')
-#  if self.pos_rob==-1:
-#   raise ValueError("Le robot n est pas la. Veuillez corriger la carte")
 
-# même si il y avait un robot on le met aleatoirement ailleurs
+# On place des robots de facon aleatoire, autant de robots que de joueurs
   self.pos_rob=list()
   i=0
   while i<nb_joueurs:
@@ -90,7 +88,7 @@ class Labyrinthe():
   return self.labyrinthe+'\n'
 
  def display(self,joueur):
-  """Afficher le labyrinthe a l utilisateur joueur. Son robot est alors mis en majuscule"""
+  """Afficher le labyrinthe a un joueur. Son robot est alors mis en majuscule"""
 
   lab_joueur=self.labyrinthe[:self.pos_rob[joueur]]+'X'+self.labyrinthe[self.pos_rob[joueur]+1:]
   
@@ -113,25 +111,26 @@ class Labyrinthe():
   elif direction=='E':
    pos_act=self.pos_rob[joueur]+1
   else:
-   message="L action n est pas valide"
+   message="L action n est pas valide.\n"
    return (message,fini)   
 
+  #On fait l action si elle est possible
   if act=='M':
    if self.labyrinthe[pos_act]==' ' or  self.labyrinthe[pos_act]=='.':
     message="On a mure"
     self.labyrinthe=self.labyrinthe[:pos_act]+'O'+self.labyrinthe[pos_act+1:]
    else:
-    message="On ne peut pas murer ici"
+    message="On ne peut pas murer ici.\n"
     return (message,fini)
   elif act=='P':
    if self.labyrinthe[pos_act]=='O':
-    message="On a perce"
+    message="On a perce.\n"
     self.labyrinthe=self.labyrinthe[:pos_act]+' '+self.labyrinthe[pos_act+1:]
    else:
-    message="On ne peut pas percer ici"
+    message="On ne peut pas percer ici.\n"
     return (message,fini)
   else:
-   message="L action n est pas valide"
+   message="L action n est pas valide.\n"
    return (message,fini)
 
   return (message,fini)
@@ -155,7 +154,7 @@ class Labyrinthe():
    elif cote=='O':
     nouv_pos=self.pos_rob[joueur]-1
    else :
-    message="L action n est pas valide"
+    message="L action n est pas valide.\n"
     return (message,fini)
  
 
